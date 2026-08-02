@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: 2026 An Nguyen
+#
+# SPDX-License-Identifier: Apache-2.0
+
+build/
+ptf.log
+ptf.pcap
+ss-log.txt
+
+# P4 / BMv2 / Mininet 執行時生成檔案
+logs/
+pcaps/
+
+# 忽略可能直接生成在根目錄的抓包檔案
+*.pcap
+
+
+# Python 緩存檔案
+__pycache__/
+*.pyc
+*.pyo
+
+# 系統與編輯器緩存
+.DS_Store
+.vscode/
+*.swp
+
+# 忽略測試時產生的實驗結果檔案
+test/result/
