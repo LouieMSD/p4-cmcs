@@ -68,9 +68,7 @@ When a transmission opportunity arises, HRDS makes a two-phase scheduling decisi
 
 The bandwidth allocation achieved by CMCS converges to the following target:
 
-$$
-B_i = \min\!\left(D_i,\; g_i + w_i\theta\right)
-$$
+$$B_i = \min\left(D_i,\ g_i + w_i\theta\right)$$
 
 where `θ ≥ 0` is a global scaling factor uniquely determined by the link capacity
 constraint, and `D_i` is VN `i`'s traffic demand.
@@ -157,4 +155,10 @@ p4-cmcs/
 
 ## License
 
-MIT
+This project is licensed under the **Apache License 2.0**.
+See the [LICENSE](LICENSE) file for details.
+
+The files under `behavioral-model-patches/` are derived from
+[p4lang/behavioral-model](https://github.com/p4lang/behavioral-model),
+which is also licensed under Apache 2.0.
+Copyright 2013-present Barefoot Networks, Inc.
