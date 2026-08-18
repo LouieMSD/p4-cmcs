@@ -1,5 +1,9 @@
 # p4-cmcs
 
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![P4](https://img.shields.io/badge/language-P4%E2%82%81%E2%82%86-orange)](https://p4.org/)
+[![Platform](https://img.shields.io/badge/platform-BMv2%20simple__switch__grpc-lightgrey)](https://github.com/p4lang/behavioral-model)
+
 **Color Marker and Color-Aware Scheduler (CMCS)** — A P4-based traffic management
 mechanism for bandwidth guarantee, weighted fair sharing of residual capacity, and
 in-order packet delivery in software-defined network virtualization.
@@ -12,66 +16,83 @@ experiment environment.
 
 ## Overview
 
-In network virtualization, multiple Virtual Networks (VNs) often share the same
-physical link. Without proper traffic management, link capacity is distributed
-arbitrarily based on arrival timing and burst intensity, offering no bandwidth
-guarantees and no fair residual capacity sharing.
-
-**CMCS** addresses this by achieving three design goals simultaneously:
+Modern cloud and enterprise networks rely on **network virtualization** to let
+multiple Virtual Networks (VNs) share the same physical infrastructure. When VNs
+share a physical link, three requirements must hold simultaneously:
 
 | Goal | Description |
 |---|---|
-| **Bandwidth Guarantee** | Each VN receives at least its contracted guaranteed bandwidth `g_i` |
-| **Weighted Fair Sharing** | Residual capacity is distributed among VNs proportionally to their weights `w_i` |
-| **In-Order Packet Delivery** | Packets within the same VN are always delivered in their original arrival order |
+| **Bandwidth Guarantee** | Each VN receives at least its contracted bandwidth `g_i`, regardless of other VNs' traffic bursts |
+| **Weighted Fair Sharing** | When the link has spare capacity, it is distributed among VNs in proportion to their weights `w_i` |
+| **In-Order Packet Delivery** | Packets within the same VN always arrive at the receiver in their original order |
 
-Most existing schemes (e.g., P4-TINS) achieve the first two goals but sacrifice
-in-order delivery by routing green (conforming) and yellow (non-conforming) packets
-into separate priority queues. This causes TCP congestion control to misinterpret
-reordering as loss, severely degrading throughput — sometimes below the guaranteed
-bandwidth. CMCS eliminates this problem entirely.
+Meeting all three goals at once is non-trivial. Prior schemes (e.g.,
+[P4-TINS](https://ieeexplore.ieee.org/document/9733931)) achieve bandwidth
+guarantee and weighted fair sharing, but route conforming (green) and
+non-conforming (yellow) packets into **separate priority queues**. This reorders
+packets within the same VN, causing TCP's congestion control to misinterpret
+reordering as loss — sometimes pushing throughput **below the guaranteed
+bandwidth**.
+
+**CMCS** eliminates this problem by keeping all packets of the same VN in a
+**single FIFO queue**, guaranteeing in-order delivery while still meeting the
+other two goals with less than 0.21% relative error in experiments.
 
 ---
 
 ## How CMCS Works
 
-CMCS consists of three functional modules deployed per egress port:
+CMCS consists of **three functional modules** deployed per egress port. They form
+a pipeline: packets are first classified by the Color Marker, then queued with
+credit tracking, and finally scheduled by HRDS.
 
 ### 1. Color Marker Bank
-Each VN has a dedicated **leaky-bucket Color Marker** that classifies every
-arriving packet against the VN's guaranteed bandwidth `g_i`:
 
-- **Green**: packet is within the guaranteed bandwidth rate
-- **Yellow**: packet exceeds the guaranteed bandwidth rate
+Each VN has a dedicated **leaky-bucket Color Marker** that tests every arriving
+packet against the VN's guaranteed bandwidth `g_i`:
 
-The classification result (`vn_id`, `color`) is written into P4 user-defined
-metadata and passed to the Traffic Manager.
+- 🟢 **Green**: within the guaranteed rate → increments GB counter on enqueue
+- 🟡 **Yellow**: exceeds the guaranteed rate → no counter update
 
-### 2. FIFO Queue Bank with Guaranteed Byte Credit (GB) Counters
-Each VN maintains a **single shared FIFO queue** for both green and yellow packets,
-preserving original arrival order within each VN. A per-VN **GB counter** `γ_i`
-accumulates the byte length of each green packet upon enqueue. Yellow packets do
-not increment the counter.
+The result (`vn_id`, `color`) is written to P4 user-defined metadata and read
+by the Traffic Manager.
 
-> Unlike dual-priority-queue designs (e.g., P4-TINS), the single-queue design
-> ensures packets are never reordered within a VN, making CMCS safe for TCP traffic.
+### 2. FIFO Queue Bank + Guaranteed Byte Credit (GB) Counter
+
+Each VN maintains a **single FIFO queue** shared by both green and yellow packets.
+This is the key difference from dual-priority-queue designs:
+
+> **Why a single queue?** Dual-queue designs (e.g., P4-TINS) separate green and
+> yellow packets, which reorders them within the same VN. A single FIFO queue
+> preserves original arrival order — making CMCS safe for TCP traffic.
+
+A per-VN **GB counter** `γᵢ` accumulates the byte length of each green packet
+at enqueue time. When `γᵢ > 0`, the VN holds unused guaranteed-bandwidth credit
+that HRDS will serve with priority.
 
 ### 3. Hybrid RR-DWRR Scheduler (HRDS)
-When a transmission opportunity arises, HRDS makes a two-phase scheduling decision:
 
-- **Phase 1 — Round Robin (RR):** Scan all VN queues in round-robin order;
-  if a VN has `γ_i > 0`, dequeue one packet and deduct `γ_i` by the packet size.
-  This phase prioritizes guaranteed bandwidth traffic.
-- **Phase 2 — Deficit Weighted Round Robin (DWRR):** When no VN has a positive
-  GB counter, distribute residual capacity proportionally to shared weights `w_i`
-  using DWRR with per-VN deficit counters that carry over across rounds.
+When a transmission opportunity arises, HRDS runs two phases **in sequence**:
 
-The bandwidth allocation achieved by CMCS converges to the following target:
+**Phase 1 — Round Robin (guaranteed bandwidth)**
+- Scan VN queues in round-robin order
+- Select the next VN with `γᵢ > 0`; dequeue one packet; deduct `γᵢ` by packet size
+- Repeat until **no VN** has `γᵢ > 0`
 
-$$B_i = \min\left(D_i,\ g_i + w_i\theta\right)$$
+**Phase 2 — Deficit Weighted Round Robin (residual capacity)**
+- Each VN has a quantum `Qᵢ ∝ wᵢ` added to its deficit counter each round
+- Dequeue packets from VNs whose deficit covers the head-of-queue packet size
+- Deficits carry over across rounds, ensuring long-term byte ratio fairness
 
-where `θ ≥ 0` is a global scaling factor uniquely determined by the link capacity
-constraint, and `D_i` is VN `i`'s traffic demand.
+Let `Bᵢ` denote the actual bandwidth allocated to VN `i`, and `Dᵢ` its traffic
+demand. The allocation achieved by CMCS converges to:
+
+$$B_i = \min\!\left(D_i,\ g_i + w_i\theta\right)$$
+
+where `θ ≥ 0` is the unique global scaling factor satisfying the link capacity
+constraint. Each VN first receives its guaranteed bandwidth `gᵢ`; remaining
+capacity is then distributed proportionally to `wᵢ`, up to each VN's actual
+demand `Dᵢ`.
 
 ## Repository Structure
 
