@@ -1,8 +1,77 @@
 # p4-cmcs
 
-Implementation of the Color Marker and Color-Aware Scheduler (CMCS)
-for bandwidth guarantee and fair sharing in software-defined virtual networks,
-based on P4₁₆ and BMv2 simple_switch_grpc.
+**Color Marker and Color-Aware Scheduler (CMCS)** — A P4-based traffic management
+mechanism for bandwidth guarantee, weighted fair sharing of residual capacity, and
+in-order packet delivery in software-defined network virtualization.
+
+Implemented in **P4₁₆** on the **BMv2 `simple_switch_grpc`** software switch,
+with a modified Traffic Manager (`QueueingLogicVN`) and a Mininet-based
+experiment environment.
+
+---
+
+## Overview
+
+In network virtualization, multiple Virtual Networks (VNs) often share the same
+physical link. Without proper traffic management, link capacity is distributed
+arbitrarily based on arrival timing and burst intensity, offering no bandwidth
+guarantees and no fair residual capacity sharing.
+
+**CMCS** addresses this by achieving three design goals simultaneously:
+
+| Goal | Description |
+|---|---|
+| **Bandwidth Guarantee** | Each VN receives at least its contracted guaranteed bandwidth `g_i` |
+| **Weighted Fair Sharing** | Residual capacity is distributed among VNs proportionally to their weights `w_i` |
+| **In-Order Packet Delivery** | Packets within the same VN are always delivered in their original arrival order |
+
+Most existing schemes (e.g., P4-TINS) achieve the first two goals but sacrifice
+in-order delivery by routing green (conforming) and yellow (non-conforming) packets
+into separate priority queues. This causes TCP congestion control to misinterpret
+reordering as loss, severely degrading throughput — sometimes below the guaranteed
+bandwidth. CMCS eliminates this problem entirely.
+
+---
+
+## How CMCS Works
+
+CMCS consists of three functional modules deployed per egress port:
+
+### 1. Color Marker Bank
+Each VN has a dedicated **leaky-bucket Color Marker** that classifies every
+arriving packet against the VN's guaranteed bandwidth `g_i`:
+
+- **Green**: packet is within the guaranteed bandwidth rate
+- **Yellow**: packet exceeds the guaranteed bandwidth rate
+
+The classification result (`vn_id`, `color`) is written into P4 user-defined
+metadata and passed to the Traffic Manager.
+
+### 2. FIFO Queue Bank with Guaranteed Byte Credit (GB) Counters
+Each VN maintains a **single shared FIFO queue** for both green and yellow packets,
+preserving original arrival order within each VN. A per-VN **GB counter** `γ_i`
+accumulates the byte length of each green packet upon enqueue. Yellow packets do
+not increment the counter.
+
+> Unlike dual-priority-queue designs (e.g., P4-TINS), the single-queue design
+> ensures packets are never reordered within a VN, making CMCS safe for TCP traffic.
+
+### 3. Hybrid RR-DWRR Scheduler (HRDS)
+When a transmission opportunity arises, HRDS makes a two-phase scheduling decision:
+
+- **Phase 1 — Round Robin (RR):** Scan all VN queues in round-robin order;
+  if a VN has `γ_i > 0`, dequeue one packet and deduct `γ_i` by the packet size.
+  This phase prioritizes guaranteed bandwidth traffic.
+- **Phase 2 — Deficit Weighted Round Robin (DWRR):** When no VN has a positive
+  GB counter, distribute residual capacity proportionally to shared weights `w_i`
+  using DWRR with per-VN deficit counters that carry over across rounds.
+
+The bandwidth allocation achieved by CMCS converges to the following target:
+
+$$B_i = \min\!\left(D_i,\; g_i + w_i\theta\right)$$
+
+where `θ ≥ 0` is a global scaling factor uniquely determined by the link capacity
+constraint, and `D_i` is VN `i`'s traffic demand.
 
 ## Repository Structure
 
