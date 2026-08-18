@@ -84,15 +84,16 @@ When a transmission opportunity arises, HRDS runs two phases **in sequence**:
 - Dequeue packets from VNs whose deficit covers the head-of-queue packet size
 - Deficits carry over across rounds, ensuring long-term byte ratio fairness
 
-Let `Bᵢ` denote the actual bandwidth allocated to VN `i`, and `Dᵢ` its traffic
-demand. The allocation achieved by CMCS converges to:
+Each VN is assigned a guaranteed bandwidth `gᵢ` and a shared weight `wᵢ`. The
+sum of all guaranteed bandwidths is at most the link capacity, ensuring no
+over-provisioning.
 
-$$B_i = \min\!\left(D_i,\ g_i + w_i\theta\right)$$
-
-where `θ ≥ 0` is the unique global scaling factor satisfying the link capacity
-constraint. Each VN first receives its guaranteed bandwidth `gᵢ`; remaining
-capacity is then distributed proportionally to `wᵢ`, up to each VN's actual
-demand `Dᵢ`.
+The actual bandwidth allocated to each VN is determined as follows. If a VN's
+traffic demand is below its guaranteed bandwidth, it receives exactly what it
+demands, and the unused portion of its guarantee is released into a shared pool.
+If a VN's demand exceeds its guarantee, it first receives its full guaranteed
+bandwidth, then competes for additional bandwidth from the shared pool in
+proportion to its weight `wᵢ`.
 
 ## Repository Structure
 
