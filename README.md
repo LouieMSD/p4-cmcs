@@ -26,6 +26,14 @@ share a physical link, three requirements must hold simultaneously:
 | **Weighted Fair Sharing** | When the link has spare capacity, it is distributed among VNs in proportion to their weights `w_i` |
 | **In-Order Packet Delivery** | Packets within the same VN always arrive at the receiver in their original order |
 
+Concretely, each VN is assigned a guaranteed bandwidth `gᵢ` and a shared weight
+`wᵢ`, with the sum of all guarantees not exceeding the link capacity. If a VN's
+traffic demand falls below its guarantee, it receives exactly what it demands and
+releases the unused portion into a shared pool. If its demand exceeds its
+guarantee, it first receives its full guaranteed bandwidth, then competes for
+additional bandwidth from the shared pool in proportion to its weight `wᵢ`. A VN
+never receives more than its actual demand.
+
 Meeting all three goals at once is non-trivial. Prior schemes (e.g.,
 [P4-TINS](https://ieeexplore.ieee.org/document/9733931)) achieve bandwidth
 guarantee and weighted fair sharing, but route conforming (green) and
@@ -83,17 +91,6 @@ When a transmission opportunity arises, HRDS runs two phases **in sequence**:
 - Each VN has a quantum `Qᵢ ∝ wᵢ` added to its deficit counter each round
 - Dequeue packets from VNs whose deficit covers the head-of-queue packet size
 - Deficits carry over across rounds, ensuring long-term byte ratio fairness
-
-Each VN is assigned a guaranteed bandwidth `gᵢ` and a shared weight `wᵢ`. The
-sum of all guaranteed bandwidths is at most the link capacity, ensuring no
-over-provisioning.
-
-The actual bandwidth allocated to each VN is determined as follows. If a VN's
-traffic demand is below its guaranteed bandwidth, it receives exactly what it
-demands, and the unused portion of its guarantee is released into a shared pool.
-If a VN's demand exceeds its guarantee, it first receives its full guaranteed
-bandwidth, then competes for additional bandwidth from the shared pool in
-proportion to its weight `wᵢ`.
 
 ## Repository Structure
 
