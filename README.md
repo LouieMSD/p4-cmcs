@@ -4,6 +4,8 @@
 [![P4](https://img.shields.io/badge/language-P4%E2%82%81%E2%82%86-orange)](https://p4.org/)
 [![Platform](https://img.shields.io/badge/platform-BMv2%20simple__switch__grpc-lightgrey)](https://github.com/p4lang/behavioral-model)
 
+English | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md)
+
 **Color Marker and Color-Aware Scheduler (CMCS)** — A P4-based traffic management
 mechanism for bandwidth guarantee, weighted fair sharing of residual capacity, and
 in-order packet delivery in software-defined network virtualization.
