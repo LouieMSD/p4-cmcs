@@ -149,9 +149,13 @@ p4-cmcs/
 
 ## Dependencies
 
-- BMv2: https://github.com/p4lang/behavioral-model (commit: TODO)
-- p4lang/tutorials: https://github.com/p4lang/tutorials (commit: TODO)
-- p4c: TODO version
+- [BMv2](https://github.com/p4lang/behavioral-model) (commit: `392f801`)
+- [p4lang/tutorials](https://github.com/p4lang/tutorials) (commit: `ce7d49f`)
+- p4c `1.2.5.11`
+- [Mininet](http://mininet.org/) `2.3.1b4`
+- Python `3.12.3`
+- iperf3
+- tshark
 
 ## How to Reproduce
 
