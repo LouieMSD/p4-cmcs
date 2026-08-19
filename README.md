@@ -159,22 +159,48 @@ p4-cmcs/
 
 ## How to Reproduce
 
-1. Clone BMv2 and apply patches:
-   ```bash
-   git clone https://github.com/p4lang/behavioral-model
-   cp -r behavioral-model-patches/include behavioral-model/
-   cp -r behavioral-model-patches/targets behavioral-model/
-   cd behavioral-model && ./install_deps.sh && ./autogen.sh && ./configure && make
-   ```
+### Prerequisites
 
-2. Run the experiment and collect results:
-   ```bash
-   cd my_project
-   make test
-   ```
-   `make test` will first bring up the virtual network topology and start
-   the P4 switch (equivalent to `make run`), then automatically execute
-   the test scripts. Experiment results will be saved to `my_project/test/result/`.
+Ensure a complete P4 development environment is installed, including
+`p4c`, `simple_switch_grpc`, and Mininet. Refer to the
+[p4lang/tutorials](https://github.com/p4lang/tutorials) install script
+for setup instructions. See [Dependencies](#dependencies) for the exact
+versions used in this project.
+
+### 1. Clone this repository
+
+```bash
+git clone https://github.com/<your-username>/p4-cmcs
+cd p4-cmcs
+```
+
+### 2. Apply patches and recompile BMv2
+
+Copy the modified source files into the BMv2 source tree, then recompile and reinstall:
+
+```bash
+cp -r behavioral-model-patches/include ~/src/behavioral-model/
+cp -r behavioral-model-patches/targets ~/src/behavioral-model/
+
+cd ~/src/behavioral-model
+make clean
+./autogen.sh
+./configure --with-pi
+make -j$(nproc)
+sudo make install
+sudo ldconfig
+```
+
+### 3. Run the experiment and collect results
+
+```bash
+cd <path-to-p4-cmcs>/my_project
+make test
+```
+
+`make test` will first bring up the virtual network topology and start
+the P4 switch (equivalent to `make run`), then automatically execute
+the test scripts. Experiment results will be saved to `my_project/test/result/`.
 
 ## License
 
