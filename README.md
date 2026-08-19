@@ -43,8 +43,8 @@ reordering as loss — sometimes pushing throughput **below the guaranteed
 bandwidth**.
 
 **CMCS** eliminates this problem by keeping all packets of the same VN in a
-**single FIFO queue**, guaranteeing in-order delivery while still meeting the
-other two goals with less than 0.21% relative error in experiments.
+**single FIFO queue**, guaranteeing in-order delivery while still accurately
+meeting the other two goals, as validated through experiments.
 
 ---
 
