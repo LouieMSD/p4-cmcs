@@ -149,41 +149,74 @@ p4-cmcs/
 | `targets/simple_switch_grpc/switch_runner.h` | Parameter changed to `std::vector<int> vn_weights` |
 | `targets/simple_switch_grpc/switch_runner.cpp` | Updated constructor parameter; forwarded to `SimpleSwitch` |
 
-## Dependencies
+## How to Reproduce
+
+### Prerequisites
+
+#### P4 Development Environment
+
+All instructions below assume that the P4 development environment has been
+installed by following the
+[official P4 installation guide for Ubuntu 24.04](https://github.com/p4lang/tutorials/tree/master/vm-ubuntu-24.04).
+
+#### Additional Tools
+
+The following tools are required by the experiment scripts and are
+**not** installed by the official guide. Install them manually
+(skip any that are already present):
+
+```bash
+sudo apt install iperf3 tshark
+```
+
+#### Tested Environment
+
+This project was developed and verified with the following versions
+(installed via the official guide above):
 
 - [BMv2](https://github.com/p4lang/behavioral-model) (commit: `392f801`)
 - [p4lang/tutorials](https://github.com/p4lang/tutorials) (commit: `ce7d49f`)
 - p4c `1.2.5.11`
 - [Mininet](http://mininet.org/) `2.3.1b4`
 - Python `3.12.3`
-- iperf3
-- tshark
 
-## How to Reproduce
-
-### Prerequisites
-
-Ensure a complete P4 development environment is installed, including
-`p4c`, `simple_switch_grpc`, and Mininet. Refer to the
-[p4lang/tutorials](https://github.com/p4lang/tutorials) install script
-for setup instructions. See [Dependencies](#dependencies) for the exact
-versions used in this project.
+> **Note:** Running the official installer at a different time may fetch
+> newer versions of these components. Only the environment listed above
+> has been formally validated; newer versions are expected to work but are
+> not guaranteed. If the patches in step 2 conflict with a newer upstream
+> BMv2 or fail to build, use the fallback described there.
 
 ### 1. Clone this repository
 
+The repository can be cloned to any location.
+
 ```bash
-git clone https://github.com/<your-username>/p4-cmcs
+git clone https://github.com/LouieMSD/p4-cmcs
 cd p4-cmcs
 ```
 
+In the remaining steps, `PATH_TO_P4_CMCS` refers to the directory where you
+cloned this repository (for example, `~/p4-cmcs`). You can run `pwd` inside
+the cloned directory to see its full path.
+
 ### 2. Apply patches and recompile BMv2
 
-Copy the modified source files into the BMv2 source tree, then recompile and reinstall:
+**2.1 Copy the modified source files into the BMv2 source tree**
 
 ```bash
+cd PATH_TO_P4_CMCS
 cp -r behavioral-model-patches/include ~/src/behavioral-model/
 cp -r behavioral-model-patches/targets ~/src/behavioral-model/
+```
 
+The path `~/src/behavioral-model/` is where the
+[official P4 installation guide](https://github.com/p4lang/tutorials/tree/master/vm-ubuntu-24.04)
+places the BMv2 source (it asks you to run `install.sh` from `~/src`).
+If you installed it elsewhere, adjust the path accordingly.
+
+**2.2 Recompile and reinstall BMv2**
+
+```bash
 cd ~/src/behavioral-model
 make clean
 ./autogen.sh
@@ -193,10 +226,20 @@ sudo make install
 sudo ldconfig
 ```
 
+**Fallback (only if patching or building fails):** the patches were written
+against BMv2 commit `392f801`. Restore the source tree to that commit, then
+repeat steps 2.1 and 2.2:
+
+```bash
+cd ~/src/behavioral-model
+git checkout -- .          # discard the copied patch files
+git checkout 392f801
+```
+
 ### 3. Run the experiment and collect results
 
 ```bash
-cd <path-to-p4-cmcs>/my_project
+cd PATH_TO_P4_CMCS/my_project
 make test
 ```
 

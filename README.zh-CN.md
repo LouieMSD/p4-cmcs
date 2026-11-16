@@ -120,37 +120,69 @@ p4-cmcs/
 | `targets/simple_switch_grpc/switch_runner.h` | 参数改为 `std::vector<int> vn_weights` |
 | `targets/simple_switch_grpc/switch_runner.cpp` | 更新构造函数参数；转发至 `SimpleSwitch` |
 
-## 依赖项
+## 如何复现
+
+### 前置条件
+
+#### P4 开发环境
+
+以下所有说明均假设已按照
+[官方 P4 安装教程（Ubuntu 24.04）](https://github.com/p4lang/tutorials/tree/master/vm-ubuntu-24.04)
+完成 P4 开发环境的安装。
+
+#### 额外工具
+
+下列工具为实验脚本所需，**不会**由官方安装教程一并安装，请自行安装
+（已安装的可跳过）：
+
+```bash
+sudo apt install iperf3 tshark
+```
+
+#### 已验证环境（Tested）
+
+本项目在以下版本中开发并验证（均通过上述官方教程安装）：
 
 - [BMv2](https://github.com/p4lang/behavioral-model)（commit：`392f801`）
 - [p4lang/tutorials](https://github.com/p4lang/tutorials)（commit：`ce7d49f`）
 - p4c `1.2.5.11`
 - [Mininet](http://mininet.org/) `2.3.1b4`
 - Python `3.12.3`
-- iperf3
-- tshark
 
-## 复现方法
+> **注意：** 在不同时间运行官方安装脚本，可能会获取这些组件的较新版本。
+> 目前仅上述环境经过正式验证；较新的版本预期可以运行，但无法保证。
+> 若步骤 2 的补丁与较新的上游 BMv2 发生冲突或编译失败，请使用该步骤中的备用方案。
 
-### 前置条件
+### 1. 获取本项目
 
-请确保已安装完整的 P4 开发环境，包含 `p4c`、`simple_switch_grpc` 与 Mininet。环境安装方式请参考 [p4lang/tutorials](https://github.com/p4lang/tutorials) 的安装脚本，各依赖项的确切版本请见[依赖项](#依赖项)一节。
-
-### 1. 克隆仓库
+项目可以 clone 到任意位置。
 
 ```bash
-git clone https://github.com/<your-username>/p4-cmcs
+git clone https://github.com/LouieMSD/p4-cmcs
 cd p4-cmcs
 ```
 
+后续步骤中的 `PATH_TO_P4_CMCS` 指的是你 clone 本项目的目录（例如 `~/p4-cmcs`）。
+可在该目录内运行 `pwd` 查看完整路径。
+
 ### 2. 应用补丁并重新编译 BMv2
 
-将修改后的源码复制至 BMv2 源码树，再重新编译并安装：
+**2.1 将修改后的源码复制到 BMv2 源码目录**
 
 ```bash
+cd PATH_TO_P4_CMCS
 cp -r behavioral-model-patches/include ~/src/behavioral-model/
 cp -r behavioral-model-patches/targets ~/src/behavioral-model/
+```
 
+`~/src/behavioral-model/` 是
+[官方 P4 安装教程](https://github.com/p4lang/tutorials/tree/master/vm-ubuntu-24.04)
+放置 BMv2 源码的位置（教程要求在 `~/src` 目录下运行 `install.sh`）。
+若你将其安装在其他位置，请自行调整路径。
+
+**2.2 重新编译并安装 BMv2**
+
+```bash
 cd ~/src/behavioral-model
 make clean
 ./autogen.sh
@@ -160,14 +192,24 @@ sudo make install
 sudo ldconfig
 ```
 
+**备用方案（仅在应用补丁或编译失败时使用）：** 本补丁是基于 BMv2 commit `392f801` 编写的。
+请将源码还原到该 commit，然后重复步骤 2.1 与 2.2：
+
+```bash
+cd ~/src/behavioral-model
+git checkout -- .          # 丢弃已复制进来的补丁文件
+git checkout 392f801
+```
+
 ### 3. 运行实验并收集结果
 
 ```bash
-cd <path-to-p4-cmcs>/my_project
+cd PATH_TO_P4_CMCS/my_project
 make test
 ```
 
-`make test` 将先构建虚拟网络拓扑并启动 P4 交换机（相当于 `make run`），再自动执行测试脚本。实验结果将保存至 `my_project/test/result/`。
+`make test` 会先创建虚拟网络拓扑并启动 P4 交换机（等同于 `make run`），
+然后自动运行测试脚本。实验结果会保存到 `my_project/test/result/`。
 
 ## 许可证
 
