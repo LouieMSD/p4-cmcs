@@ -211,10 +211,10 @@ cp -r behavioral-model-patches/include ~/src/behavioral-model/
 cp -r behavioral-model-patches/targets ~/src/behavioral-model/
 ```
 
-The path `~/src/behavioral-model/` is where the
-[official P4 installation guide](https://github.com/p4lang/tutorials/tree/master/vm-ubuntu-24.04)
-places the BMv2 source (it asks you to run `install.sh` from `~/src`).
-If you installed it elsewhere, adjust the path accordingly.
+The path `~/src/behavioral-model/` is where the official P4 installation
+guide mentioned under "P4 Development Environment" above places the BMv2
+source (it asks you to run `install.sh` from `~/src`). If you did not follow
+the official guide and installed BMv2 elsewhere, adjust the path accordingly.
 
 **2.2 Recompile and reinstall BMv2**
 

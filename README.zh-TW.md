@@ -177,10 +177,9 @@ cp -r behavioral-model-patches/include ~/src/behavioral-model/
 cp -r behavioral-model-patches/targets ~/src/behavioral-model/
 ```
 
-`~/src/behavioral-model/` 是
-[官方 P4 安裝教學](https://github.com/p4lang/tutorials/tree/master/vm-ubuntu-24.04)
+`~/src/behavioral-model/` 是上方「P4 開發環境」中提到的官方 P4 安裝教學
 放置 BMv2 原始碼的位置（教學要求在 `~/src` 目錄下執行 `install.sh`）。
-若你將其安裝在其他位置，請自行調整路徑。
+若你並未依照官方教學安裝，而是將 BMv2 安裝在其他位置，請自行調整路徑。
 
 **2.2 重新編譯並安裝 BMv2**
 
