@@ -159,26 +159,33 @@ All instructions below assume that the P4 development environment has been
 installed by following the
 [official P4 installation guide for Ubuntu 24.04](https://github.com/p4lang/tutorials/tree/master/vm-ubuntu-24.04).
 
-#### Additional Tools
+#### Additional Dependencies
 
-The following tools are required by the experiment scripts and are
-**not** installed by the official guide. Install them manually
-(skip any that are already present):
+The following are required by the experiment scripts and are **not**
+installed by the official guide:
+
+- `iperf3` (system package)
+- `matplotlib` (Python package, used by `plot_results.py`)
+
+Install them as follows. Run `pip` inside the `p4dev-python-venv` virtual
+environment created by the official guide:
 
 ```bash
-sudo apt install iperf3 tshark
+sudo apt install iperf3
+pip install matplotlib
 ```
 
 #### Tested Environment
 
 This project was developed and verified with the following versions
-(installed via the official guide above):
+(installed via the official guide above, except where noted):
 
 - [BMv2](https://github.com/p4lang/behavioral-model) (commit: `392f801`)
 - [p4lang/tutorials](https://github.com/p4lang/tutorials) (commit: `ce7d49f`)
 - p4c `1.2.5.11`
 - [Mininet](http://mininet.org/) `2.3.1b4`
 - Python `3.12.3`
+- matplotlib `3.11.2` (installed via pip)
 
 > **Note:** Running the official installer at a different time may fetch
 > newer versions of these components. Only the environment listed above
@@ -219,7 +226,6 @@ If you installed it elsewhere, adjust the path accordingly.
 ```bash
 cd ~/src/behavioral-model
 make clean
-./autogen.sh
 ./configure --with-pi
 make -j$(nproc)
 sudo make install
@@ -246,6 +252,16 @@ make test
 `make test` will first bring up the virtual network topology and start
 the P4 switch (equivalent to `make run`), then automatically execute
 the test scripts. Experiment results will be saved to `my_project/test/result/`.
+
+To remove the generated files (including the experiment results), run:
+
+```bash
+make clean
+```
+
+`make clean` stops any leftover Mininet instance and removes the generated
+files, including the experiment results in `test/result/`. If you want to
+keep the results, back them up before running it.
 
 ## License
 

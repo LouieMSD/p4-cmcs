@@ -130,24 +130,30 @@ p4-cmcs/
 [官方 P4 安装教程（Ubuntu 24.04）](https://github.com/p4lang/tutorials/tree/master/vm-ubuntu-24.04)
 完成 P4 开发环境的安装。
 
-#### 额外工具
+#### 额外依赖
 
-下列工具为实验脚本所需，**不会**由官方安装教程一并安装，请自行安装
-（已安装的可跳过）：
+下列依赖为实验脚本所需，**不会**由官方安装教程一并安装：
+
+- `iperf3`（系统软件包）
+- `matplotlib`（Python 包，供 `plot_results.py` 使用）
+
+请按下列方式安装。`pip` 须在官方教程创建的 `p4dev-python-venv` 虚拟环境中运行：
 
 ```bash
-sudo apt install iperf3 tshark
+sudo apt install iperf3
+pip install matplotlib
 ```
 
 #### 已验证环境（Tested）
 
-本项目在以下版本中开发并验证（均通过上述官方教程安装）：
+本项目在以下版本中开发并验证（除特别注明外，均通过上述官方教程安装）：
 
 - [BMv2](https://github.com/p4lang/behavioral-model)（commit：`392f801`）
 - [p4lang/tutorials](https://github.com/p4lang/tutorials)（commit：`ce7d49f`）
 - p4c `1.2.5.11`
 - [Mininet](http://mininet.org/) `2.3.1b4`
 - Python `3.12.3`
+- matplotlib `3.11.2`（通过 pip 安装）
 
 > **注意：** 在不同时间运行官方安装脚本，可能会获取这些组件的较新版本。
 > 目前仅上述环境经过正式验证；较新的版本预期可以运行，但无法保证。
@@ -185,7 +191,6 @@ cp -r behavioral-model-patches/targets ~/src/behavioral-model/
 ```bash
 cd ~/src/behavioral-model
 make clean
-./autogen.sh
 ./configure --with-pi
 make -j$(nproc)
 sudo make install
@@ -210,6 +215,15 @@ make test
 
 `make test` 会先创建虚拟网络拓扑并启动 P4 交换机（等同于 `make run`），
 然后自动运行测试脚本。实验结果会保存到 `my_project/test/result/`。
+
+若要清除生成的文件（包括实验结果），请运行：
+
+```bash
+make clean
+```
+
+`make clean` 会停止残留的 Mininet，并删除生成的文件，包括 `test/result/` 中的实验结果。
+若需保留实验结果，请在运行前先自行备份。
 
 ## 许可证
 
