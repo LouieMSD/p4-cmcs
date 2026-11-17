@@ -199,19 +199,14 @@ The repository can be cloned to any location.
 
 ```bash
 git clone https://github.com/LouieMSD/p4-cmcs
-cd p4-cmcs
 ```
-
-In the remaining steps, `PATH_TO_P4_CMCS` refers to the directory where you
-cloned this repository (for example, `~/p4-cmcs`). You can run `pwd` inside
-the cloned directory to see its full path.
 
 ### 2. Apply patches and recompile BMv2
 
 **2.1 Copy the modified source files into the BMv2 source tree**
 
 ```bash
-cd PATH_TO_P4_CMCS
+cd p4-cmcs
 cp -r behavioral-model-patches/include ~/src/behavioral-model/
 cp -r behavioral-model-patches/targets ~/src/behavioral-model/
 ```
@@ -248,6 +243,9 @@ git checkout 392f801
 cd PATH_TO_P4_CMCS/my_project
 make test
 ```
+
+`PATH_TO_P4_CMCS` is the directory where you cloned this repository in
+step 1 (for example, `~/p4-cmcs`).
 
 `make test` will first bring up the virtual network topology and start
 the P4 switch (equivalent to `make run`), then automatically execute

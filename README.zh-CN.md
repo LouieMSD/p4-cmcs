@@ -165,18 +165,14 @@ pip install matplotlib
 
 ```bash
 git clone https://github.com/LouieMSD/p4-cmcs
-cd p4-cmcs
 ```
-
-后续步骤中的 `PATH_TO_P4_CMCS` 指的是你 clone 本项目的目录（例如 `~/p4-cmcs`）。
-可在该目录内运行 `pwd` 查看完整路径。
 
 ### 2. 应用补丁并重新编译 BMv2
 
 **2.1 将修改后的源码复制到 BMv2 源码目录**
 
 ```bash
-cd PATH_TO_P4_CMCS
+cd p4-cmcs
 cp -r behavioral-model-patches/include ~/src/behavioral-model/
 cp -r behavioral-model-patches/targets ~/src/behavioral-model/
 ```
@@ -212,6 +208,8 @@ git checkout 392f801
 cd PATH_TO_P4_CMCS/my_project
 make test
 ```
+
+`PATH_TO_P4_CMCS` 是步骤 1 中你 clone 本项目的目录（例如 `~/p4-cmcs`）。
 
 `make test` 会先创建虚拟网络拓扑并启动 P4 交换机（等同于 `make run`），
 然后自动运行测试脚本。实验结果会保存到 `my_project/test/result/`。
